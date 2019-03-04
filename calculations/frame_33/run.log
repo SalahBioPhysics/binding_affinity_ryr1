@@ -1,0 +1,4560 @@
+===========================================================
+<<< MCCE Multi-Conformation Continuum Electrostatics >>>   
+ Marilyn Gunner's Lab at City College of New York, 2005    
+-----------------------------------------------------------
+Version:        2.5.1                                      
+MCCE Home Page: http://www.sci.ccny.cuny.edu/~gunner/mcce  
+Support:        gunner@sci.ccny.cuny.edu                   
+Developed by:   Junjun Mao, Yifan Song, Marilyn Gunner     
+Reference MCCE: If you publish data calculated with MCCE,  
+                you need to cite papers suggested in MCCE  
+                Home Page.                                 
+===========================================================
+
+Last Updates:                                              
+   04/10, Added Pascal Comte's GA/SA algorithm for sidechain
+          packing and sampling.     			      
+   04/10, Added APBS electrostatic calculation option      
+   08/08, Total pairwise is set to be 999.0 if vdw is 999.0
+   08/02, step 3, zero interaction bug fixed               
+   07/23, step 1 changes the policy on AltLoc backbone atoms
+          now it is warning instead of fatal error.        
+   06/22, step 1 recognizes FME and ACE as NTR caps        
+   05/27, step 2 reduces rotation steps for surface residues
+          The run.prm.default uses 0.25 SAS to decide suface
+          residues.                                        
+   05/04, Program doesn't stop at duplicate parameters,    
+          it issues a warning message. This fixes the deadlock
+          caused by multiple new cofactors                 
+   04/24, Energy lookup table compressed, size is reduced  
+          to about 1/12                                    
+   04/24, Opp files are compressed. Temporary files are    
+          stored under local directory.                    
+   04/14, Step 2 rotamer pruning by pairwise corrected.    
+   04/08, Step 2 repacking now ses better H bnd correction.
+   01/26, Step 3 fixed incorrect errno message.            
+   01/14, Step 3 dielectric boundary condition improved.   
+   12/07, Step 3 dielectric boundary condition is corrected.
+   11/17, pKa fitting writes "pKa titration curve too sharp"
+          when occ jumps from 0.015 to 0.985.              
+   11/17, Exposed conformer is marked as E in history.     
+   11/02, Optional quick step 3 included.                  
+   11/02, Pruning fuction is added at the end of step 2.   
+          Parameter lines were added to run.prm.           
+   10/29, Temporary gdbm files have file names.            
+   10/11, Use biggest rxn energy from the last 3 delphi    
+          focusing runs.                                   
+===========================================================
+
+Step 0. Initialize enviroment
+   Load run control file "run.prm"...
+   Done
+
+   Tentatively load local param file "new.tpl"...   No such file, ignore.
+   Done
+
+   Load parameters from directory "/home/mcce/mcce2.5.1//param04" ... 
+
+   In file /home/mcce/mcce2.5.1//param04/hmc.tpl, parameter "CONNECT  HMC01  CAB sp2       0     C3B 0     CBB LIG   SG" is already loaded somewhere else.
+   Try delete this entry and run MCCE again
+   Done
+
+   Load linear free energy correction parameters from "/home/mcce/mcce2.5.1/extra.tpl".../home/mcce/mcce2.5.1/extra.tpl
+   File loaded.
+   Done
+
+Step 0 Done.
+
+Step 1. Test and format structral file
+   Read pdb file "/home/guest/ryr1_energyCalculations/calculations/new_model/frame_33/33_new.pdb"...
+   Done
+
+   Read name rule file "/home/mcce/mcce2.5.1/name.txt"...
+   Done
+
+   Rename residue and atom names...
+   Renaming " CA   CA B7000" to " CA  _CA B7000"
+   Done
+
+   Identify NTR and CTR...
+      Labeling "LYS B3614" as NTR
+      Labeling "GLU B3747" as NTR
+      Labeling "ASP B4063" as NTR
+      Labeling "ALA B4136" as NTR
+      Labeling "TYR B4177" as NTR
+      Labeling "PHE B4540" as NTR
+      Labeling "ASN B4626" as NTR
+      Labeling "GLU B4910" as NTR
+      Labeling "GLY B4934" as NTG
+      Labeling "ASN B3741" as CTR
+      Labeling "PHE B4062" as CTR
+      Labeling "PRO B4135" as CTR
+      Labeling "PRO B4176" as CTR
+      Labeling "GLU B4253" as CTR
+      Labeling "PRO B4587" as CTR
+      Labeling "TYR B4909" as CTR
+      Labeling "GLN B4933" as CTR
+      Labeling "SER B5037" as CTR
+   Done
+
+   Label backbone, sidechain and altLoc conformers...
+   Done
+
+   Load pdb lines into data structure...
+   WARNING: load_pdb(): "No NATOM for conformer SER _, set to 0."
+   Done
+
+   Strip free cofactors with SAS >   5%...
+   Warning! assign_vdw_param(): missing parameter(s), default value is used and saved in debug.log.
+        0 free cofactors were stripped off in this round
+   Total deleted cofactors = 0.
+   Done
+
+   Check missing heavy atoms and complete altLoc conformers...
+   Missing heavy atom  N   of conf LYSBK in "LYS B3614".
+   Missing heavy atom  CA  of conf LYSBK in "LYS B3614".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B3614".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B3614".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B3614".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B3614".
+   Missing heavy atom  OG  of conf SER01 in "SER B3615".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B3616".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B3616".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B3616".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B3616".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B3617".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B3617".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B3617".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B3617".
+   Missing heavy atom  CG  of conf HIS01 in "HIS B3621".
+   Missing heavy atom  ND1 of conf HIS01 in "HIS B3621".
+   Missing heavy atom  CE1 of conf HIS01 in "HIS B3621".
+   Missing heavy atom  NE2 of conf HIS01 in "HIS B3621".
+   Missing heavy atom  CD2 of conf HIS01 in "HIS B3621".
+   Missing heavy atom  OG  of conf SER01 in "SER B3625".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B3626".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B3626".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B3626".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B3626".
+   Missing heavy atom  CG  of conf GLN01 in "GLN B3627".
+   Missing heavy atom  CD  of conf GLN01 in "GLN B3627".
+   Missing heavy atom  OE1 of conf GLN01 in "GLN B3627".
+   Missing heavy atom  NE2 of conf GLN01 in "GLN B3627".
+   Missing heavy atom  CG  of conf ARG01 in "ARG B3629".
+   Missing heavy atom  CD  of conf ARG01 in "ARG B3629".
+   Missing heavy atom  NE  of conf ARG01 in "ARG B3629".
+   Missing heavy atom  CZ  of conf ARG01 in "ARG B3629".
+   Missing heavy atom  NH1 of conf ARG01 in "ARG B3629".
+   Missing heavy atom  NH2 of conf ARG01 in "ARG B3629".
+   Missing heavy atom  CG  of conf ARG01 in "ARG B3630".
+   Missing heavy atom  CD  of conf ARG01 in "ARG B3630".
+   Missing heavy atom  NE  of conf ARG01 in "ARG B3630".
+   Missing heavy atom  CZ  of conf ARG01 in "ARG B3630".
+   Missing heavy atom  NH1 of conf ARG01 in "ARG B3630".
+   Missing heavy atom  NH2 of conf ARG01 in "ARG B3630".
+   Missing heavy atom  CG  of conf ARG01 in "ARG B3637".
+   Missing heavy atom  CD  of conf ARG01 in "ARG B3637".
+   Missing heavy atom  NE  of conf ARG01 in "ARG B3637".
+   Missing heavy atom  CZ  of conf ARG01 in "ARG B3637".
+   Missing heavy atom  NH1 of conf ARG01 in "ARG B3637".
+   Missing heavy atom  NH2 of conf ARG01 in "ARG B3637".
+   Missing heavy atom  CG of conf MET01 in "MET B3638".
+   Missing heavy atom  SD of conf MET01 in "MET B3638".
+   Missing heavy atom  CE of conf MET01 in "MET B3638".
+   Missing heavy atom  OG1 of conf THR01 in "THR B3664".
+   Missing heavy atom  CG2 of conf THR01 in "THR B3664".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3665".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3665".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3665".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3665".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3682".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3682".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3682".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3682".
+   Missing heavy atom  CG  of conf GLN01 in "GLN B3683".
+   Missing heavy atom  CD  of conf GLN01 in "GLN B3683".
+   Missing heavy atom  OE1 of conf GLN01 in "GLN B3683".
+   Missing heavy atom  NE2 of conf GLN01 in "GLN B3683".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3684".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3684".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3684".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3684".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3685".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3685".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3685".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3685".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3686".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3686".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3686".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3686".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3687".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3687".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3687".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3687".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3688".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3688".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3688".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3688".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3689".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3689".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3689".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3689".
+   Missing heavy atom  CG1 of conf VAL01 in "VAL B3690".
+   Missing heavy atom  CG2 of conf VAL01 in "VAL B3690".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3691".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3691".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3691".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3691".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3692".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3692".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3692".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3692".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B3693".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B3693".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B3693".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B3693".
+   Missing heavy atom  CG  of conf HIS01 in "HIS B3734".
+   Missing heavy atom  ND1 of conf HIS01 in "HIS B3734".
+   Missing heavy atom  CE1 of conf HIS01 in "HIS B3734".
+   Missing heavy atom  NE2 of conf HIS01 in "HIS B3734".
+   Missing heavy atom  CD2 of conf HIS01 in "HIS B3734".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B3735".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B3735".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B3735".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3736".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3736".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3736".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3736".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3737".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3737".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3737".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3737".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3740".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3740".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3740".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3740".
+   Missing heavy atom  C   of conf ASNBK in "ASN B3741".
+   Missing heavy atom  O   of conf ASNBK in "ASN B3741".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B3741".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B3741".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B3741".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B3741".
+   Missing heavy atom  N   of conf GLUBK in "GLU B3747".
+   Missing heavy atom  CA  of conf GLUBK in "GLU B3747".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3747".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3747".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3747".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3747".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3748".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3748".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3748".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3748".
+   Missing heavy atom  CG1 of conf VAL01 in "VAL B3749".
+   Missing heavy atom  CG2 of conf VAL01 in "VAL B3749".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3854".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3854".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3854".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3854".
+   Missing heavy atom  CG of conf MET01 in "MET B3858".
+   Missing heavy atom  SD of conf MET01 in "MET B3858".
+   Missing heavy atom  CE of conf MET01 in "MET B3858".
+   Missing heavy atom  CG1 of conf VAL01 in "VAL B3859".
+   Missing heavy atom  CG2 of conf VAL01 in "VAL B3859".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B3860".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B3860".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B3860".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3861".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3861".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3861".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3861".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B3862".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B3862".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B3862".
+   Missing heavy atom  OG1 of conf THR01 in "THR B3864".
+   Missing heavy atom  CG2 of conf THR01 in "THR B3864".
+   Missing heavy atom  CG1 of conf VAL01 in "VAL B3865".
+   Missing heavy atom  CG2 of conf VAL01 in "VAL B3865".
+   Missing heavy atom  CG1 of conf ILE01 in "ILE B3866".
+   Missing heavy atom  CG2 of conf ILE01 in "ILE B3866".
+   Missing heavy atom  CD1 of conf ILE01 in "ILE B3866".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B3867".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B3867".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B3867".
+   Missing heavy atom  CG  of conf ARG01 in "ARG B3868".
+   Missing heavy atom  CD  of conf ARG01 in "ARG B3868".
+   Missing heavy atom  NE  of conf ARG01 in "ARG B3868".
+   Missing heavy atom  CZ  of conf ARG01 in "ARG B3868".
+   Missing heavy atom  NH1 of conf ARG01 in "ARG B3868".
+   Missing heavy atom  NH2 of conf ARG01 in "ARG B3868".
+   Missing heavy atom  CG  of conf GLN01 in "GLN B3869".
+   Missing heavy atom  CD  of conf GLN01 in "GLN B3869".
+   Missing heavy atom  OE1 of conf GLN01 in "GLN B3869".
+   Missing heavy atom  NE2 of conf GLN01 in "GLN B3869".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B3870".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B3870".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B3870".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3872".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3872".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3872".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3872".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B3873".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B3873".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B3873".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B3873".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B3879".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B3879".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B3879".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B3879".
+   Missing heavy atom  C   of conf PHEBK in "PHE B4062".
+   Missing heavy atom  O   of conf PHEBK in "PHE B4062".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4062".
+   Missing heavy atom  N   of conf ASPBK in "ASP B4063".
+   Missing heavy atom  CA  of conf ASPBK in "ASP B4063".
+   Missing heavy atom  CG of conf MET01 in "MET B4122".
+   Missing heavy atom  SD of conf MET01 in "MET B4122".
+   Missing heavy atom  CE of conf MET01 in "MET B4122".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4126".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4126".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4126".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4126".
+   Missing heavy atom  C   of conf PROBK in "PRO B4135".
+   Missing heavy atom  O   of conf PROBK in "PRO B4135".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4135".
+   Missing heavy atom  N   of conf ALABK in "ALA B4136".
+   Missing heavy atom  CA  of conf ALABK in "ALA B4136".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4157".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4157".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4157".
+   Missing heavy atom  C   of conf PROBK in "PRO B4176".
+   Missing heavy atom  O   of conf PROBK in "PRO B4176".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4176".
+   Missing heavy atom  N   of conf TYRBK in "TYR B4177".
+   Missing heavy atom  CA  of conf TYRBK in "TYR B4177".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4199".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4199".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4199".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4199".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B4211".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B4211".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B4211".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B4211".
+   Missing heavy atom  C   of conf GLUBK in "GLU B4253".
+   Missing heavy atom  O   of conf GLUBK in "GLU B4253".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4253".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4253".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4253".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4253".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4253".
+   Missing heavy atom  N   of conf PHEBK in "PHE B4540".
+   Missing heavy atom  CA  of conf PHEBK in "PHE B4540".
+   Missing heavy atom  CG  of conf PHE01 in "PHE B4540".
+   Missing heavy atom  CD1 of conf PHE01 in "PHE B4540".
+   Missing heavy atom  CD2 of conf PHE01 in "PHE B4540".
+   Missing heavy atom  CE1 of conf PHE01 in "PHE B4540".
+   Missing heavy atom  CE2 of conf PHE01 in "PHE B4540".
+   Missing heavy atom  CZ  of conf PHE01 in "PHE B4540".
+   Missing heavy atom  CG  of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CD1 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CD2 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  NE1 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CE2 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CE3 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CZ2 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CZ3 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CH2 of conf TRP01 in "TRP B4541".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4543".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4543".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4543".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4543".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B4544".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B4544".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B4544".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4545".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4545".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4545".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4545".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B4550".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B4550".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B4550".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B4550".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4584".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4584".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4584".
+   Missing heavy atom  OG  of conf SER01 in "SER B4585".
+   Missing heavy atom  C   of conf PROBK in "PRO B4587".
+   Missing heavy atom  O   of conf PROBK in "PRO B4587".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4587".
+   Missing heavy atom  N   of conf ASNBK in "ASN B4626".
+   Missing heavy atom  CA  of conf ASNBK in "ASN B4626".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B4626".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B4626".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B4626".
+   Missing heavy atom  CG of conf MET01 in "MET B4627".
+   Missing heavy atom  SD of conf MET01 in "MET B4627".
+   Missing heavy atom  CE of conf MET01 in "MET B4627".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4744".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4744".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4744".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B4745".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B4745".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B4745".
+   Missing heavy atom  OG  of conf SER01 in "SER B4747".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B4748".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B4748".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B4748".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4749".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4749".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4749".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4749".
+   Missing heavy atom  CG1 of conf ILE01 in "ILE B4750".
+   Missing heavy atom  CG2 of conf ILE01 in "ILE B4750".
+   Missing heavy atom  CD1 of conf ILE01 in "ILE B4750".
+   Missing heavy atom  OG1 of conf THR01 in "THR B4751".
+   Missing heavy atom  CG2 of conf THR01 in "THR B4751".
+   Missing heavy atom  CG  of conf HIS01 in "HIS B4753".
+   Missing heavy atom  ND1 of conf HIS01 in "HIS B4753".
+   Missing heavy atom  CE1 of conf HIS01 in "HIS B4753".
+   Missing heavy atom  NE2 of conf HIS01 in "HIS B4753".
+   Missing heavy atom  CD2 of conf HIS01 in "HIS B4753".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B4754".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B4754".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B4754".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4755".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4755".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4755".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4755".
+   Missing heavy atom  CG  of conf ARG01 in "ARG B4756".
+   Missing heavy atom  CD  of conf ARG01 in "ARG B4756".
+   Missing heavy atom  NE  of conf ARG01 in "ARG B4756".
+   Missing heavy atom  CZ  of conf ARG01 in "ARG B4756".
+   Missing heavy atom  NH1 of conf ARG01 in "ARG B4756".
+   Missing heavy atom  NH2 of conf ARG01 in "ARG B4756".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B4757".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B4757".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B4757".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B4757".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4759".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4759".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4759".
+   Missing heavy atom  CG  of conf PRO01 in "PRO B4761".
+   Missing heavy atom  CD of conf PRO01 in "PRO B4761".
+   Missing heavy atom  CG  of conf PRO01 in "PRO B4762".
+   Missing heavy atom  CD of conf PRO01 in "PRO B4762".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B4764".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B4764".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B4764".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B4765".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B4765".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B4765".
+   Missing heavy atom  OG1 of conf THR01 in "THR B4766".
+   Missing heavy atom  CG2 of conf THR01 in "THR B4766".
+   Missing heavy atom  CG  of conf LEU01 in "LEU B4768".
+   Missing heavy atom  CD1 of conf LEU01 in "LEU B4768".
+   Missing heavy atom  CD2 of conf LEU01 in "LEU B4768".
+   Missing heavy atom  CG of conf MET01 in "MET B4769".
+   Missing heavy atom  SD of conf MET01 in "MET B4769".
+   Missing heavy atom  CE of conf MET01 in "MET B4769".
+   Missing heavy atom  OG  of conf SER01 in "SER B4770".
+   Missing heavy atom  CG1 of conf ILE01 in "ILE B4771".
+   Missing heavy atom  CG2 of conf ILE01 in "ILE B4771".
+   Missing heavy atom  CD1 of conf ILE01 in "ILE B4771".
+   Missing heavy atom  CG  of conf ARG01 in "ARG B4860".
+   Missing heavy atom  CD  of conf ARG01 in "ARG B4860".
+   Missing heavy atom  NE  of conf ARG01 in "ARG B4860".
+   Missing heavy atom  CZ  of conf ARG01 in "ARG B4860".
+   Missing heavy atom  NH1 of conf ARG01 in "ARG B4860".
+   Missing heavy atom  NH2 of conf ARG01 in "ARG B4860".
+   Missing heavy atom  CG  of conf ASN01 in "ASN B4864".
+   Missing heavy atom  OD1 of conf ASN01 in "ASN B4864".
+   Missing heavy atom  ND2 of conf ASN01 in "ASN B4864".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B4865".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B4865".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B4865".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B4865".
+   Missing heavy atom  OG  of conf SER01 in "SER B4866".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4867".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4867".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4867".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4867".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4868".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4868".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4868".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4869".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4869".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4869".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4869".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4870".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4870".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4870".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4871".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4871".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4871".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4871".
+   Missing heavy atom  CG  of conf PRO01 in "PRO B4872".
+   Missing heavy atom  CD of conf PRO01 in "PRO B4872".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4873".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4873".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4873".
+   Missing heavy atom  CG of conf MET01 in "MET B4874".
+   Missing heavy atom  SD of conf MET01 in "MET B4874".
+   Missing heavy atom  CE of conf MET01 in "MET B4874".
+   Missing heavy atom  CG  of conf LYS01 in "LYS B4875".
+   Missing heavy atom  CD  of conf LYS01 in "LYS B4875".
+   Missing heavy atom  CE  of conf LYS01 in "LYS B4875".
+   Missing heavy atom  NZ  of conf LYS01 in "LYS B4875".
+   Missing heavy atom  SG of conf CYS01 in "CYS B4876".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4878".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4878".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4878".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B4907".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B4907".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B4907".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4908".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4908".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4908".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4908".
+   Missing heavy atom  C   of conf TYRBK in "TYR B4909".
+   Missing heavy atom  O   of conf TYRBK in "TYR B4909".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4909".
+   Missing heavy atom  N   of conf GLUBK in "GLU B4910".
+   Missing heavy atom  CA  of conf GLUBK in "GLU B4910".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4910".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4910".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4910".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4910".
+   Missing heavy atom  C   of conf GLNBK in "GLN B4933".
+   Missing heavy atom  O   of conf GLNBK in "GLN B4933".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B4933".
+   Missing heavy atom  N   of conf GLYBK in "GLY B4934".
+   Missing heavy atom  CA  of conf GLYBK in "GLY B4934".
+   Missing heavy atom  CG  of conf GLU01 in "GLU B4955".
+   Missing heavy atom  CD  of conf GLU01 in "GLU B4955".
+   Missing heavy atom  OE1 of conf GLU01 in "GLU B4955".
+   Missing heavy atom  OE2 of conf GLU01 in "GLU B4955".
+   Missing heavy atom  CG  of conf ASP01 in "ASP B5034".
+   Missing heavy atom  OD1 of conf ASP01 in "ASP B5034".
+   Missing heavy atom  OD2 of conf ASP01 in "ASP B5034".
+   Missing heavy atom  C   of conf SERBK in "SER B5037".
+   Missing heavy atom  O   of conf SERBK in "SER B5037".
+   Missing heavy atom  OG  of conf SER01 in "SER B5037".
+   Missing heavy atom  OXT of conf CTR01 in "CTR B5037".
+   Missing heavy atoms detected.
+   Ignore warning messages if they are in the terminal residues
+   Done
+
+   Find distance clash (<2.000)...
+   d= 1.53: " CA  NTR B3614" to " CB  LYS B3614"
+   d= 1.53: " CA  NTR B3747" to " CB  GLU B3747"
+   d= 1.54: " CA  NTR B4063" to " CB  ASP B4063"
+   d= 1.52: " CA  NTR B4136" to " CB  ALA B4136"
+   d= 1.51: " CA  NTR B4177" to " CB  TYR B4177"
+   d= 1.53: " CA  NTR B4540" to " CB  PHE B4540"
+   d= 1.53: " CA  NTR B4626" to " CB  ASN B4626"
+   d= 1.53: " CA  NTR B4910" to " CB  GLU B4910"
+   Done
+
+   Make connectivity network ...
+   Done.
+
+   2 TORSION parameters were guessed and recorded in file debug.log.
+   Modify and put them into a param file to have the full control.
+   Total time for step1 (premcce) is 4 seconds.
+
+   Output files:
+      step1_out.pdb         will be the input of step 2.
+      head1.lst             rotamer making control file for step 2
+      acc.atm               atom solvent accessible surface
+      acc.res               residue solvent accessible surface
+      head1.lst             rotamer making instruction, used in step2
+
+Step 1 Done.
+
+Step 2. Make multi side chain conformers
+   Load step 1 output file step1_out.pdb...
+   Done
+
+   Rotamer statistics is dynamically updated in file "rot_stat"
+
+   Remove redundant heavy atom conformers in step1_out.pdb
+   0 conformers were deleted.
+   Done
+
+
+   Relax crystal water..
+   Done
+
+   Prepare for rotamer making ...
+   Deleting H atoms...8813 H atoms were deleted.
+   Assigning radii.
+   Estimating Solvent Accessible Surface (SAS).
+   Done.
+
+   Swap atoms...
+   Done
+
+
+   Extra rotamers...
+   Done
+
+
+   Delete duplicate conformers ... 0 conformers deleted.
+   Done. Time spent = 0
+
+   Prune rotamers by self VDW potential...
+   Creating connectivity table...
+   Computing self VDW potential. It may take a while...
+   Warning! assign_crg():      missing parameter(s), default value is used and saved in debug.log.
+   Pruning rotamers...11 rotamers deleted.
+   Done. Time spent = 4
+
+
+   Tuning exposed rotamers...
+   Done. Time spent = 26
+
+
+   Repack side chains 5000 times, remove inaccessible conformers...
+   Computing pairwise LJ potential. This may take a while.
+      Estimated time on AMD 1.6GHz is 66 seconds.
+      Actual time is 49
+   Repacking in progress, see progress.log for details...
+   Done. Time spent = 57
+
+
+   Skip writing heavy atome rotamer pdb file hvrot.pdb
+   Randomly prune conformers...
+   Done
+
+   Making ionization conformers...
+   Done
+
+
+   Add H atoms...
+   1 TORSION parameters were guessed and recorded in file debug.log.
+   Modify and put them into a param file to have the full control.
+   Warning! assign_crg():      missing parameter(s), default value is used and saved in debug.log.
+   Done
+
+      179 conformers deleted in this cycle at    2.000    2.000    2.000
+
+   NOT optimizing hydroxyl and water.
+
+   Sorting conformers...
+   Done
+
+   Skip writing full rotamer file step2_out.full.
+   Delete duplicate conformers ...
+      22 conformers deleted in this cycle at    2.000    2.000    2.000
+   Done. Time spent = 86
+
+
+   Write output...
+   Done
+
+   Total time for step2 (rotamer making) is 367 seconds.
+
+   Output files:
+      step2_out.pdb   : mcce pdb file, the input of step 3
+      head2.lst       : conformer summary
+      step2_out.full  : rotamers without pairwise pruning.
+      hvrot.pdb       : heavy atom rotamers, can be used recursively by step 2
+
+Step 2 Done.
+
+Step 3. Compute energy lookup table
+   Load step 2 output file step2_out.pdb...
+   Done
+
+   Reporting non integer conformer charge ...
+   Passed, no non-integer charges
+   Done
+
+   Creating connectivity table...
+   Done
+
+   Preparing PBE runs at epsilon 4.00 ...
+      5 focusing runs required for this protein.
+   Done
+
+Running delphi surface calculations ...
+
+   Computing pairwise from conformer 1 to 2399 of 2399 total conformers
+      see progress.log for progress...
+
+   WARNING: Delphi failed at focusing depth 2 of NTR01B3614_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3615_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3615_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3617_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B3625_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3626_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3628_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3628_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3629_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3629_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3629_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3629_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3630_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B3630_006, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3637_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3637_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3637_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3639_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3639_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3639_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3642_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3643_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3643_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3647_006, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3647_006, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B3648_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3650_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3650_003, retry
+
+   WARNING: Delphi failed at focusing depth 3 of TYR-1B3657_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of TYR-1B3657_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3658_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3658_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3664_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3665_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3665_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3665_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B3667_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3667_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B3667_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B3668_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3670_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3670_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3671_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B3671_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3671_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3672_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3675_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3675_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3676_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3676_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3682_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3683_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3684_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3685_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3686_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3686_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3687_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3687_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3688_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3688_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3688_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3691_003, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3692_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3694_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B3696_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B3699_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B3699_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B3704_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B3704_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B3704_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3704_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005, retry
+   Trying changing scale on trial 4
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_006, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_006, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3706_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ARG02B3707_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ARG03B3707_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3708_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3708_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3711_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3711_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3711_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3712_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3712_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3713_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of LYS01B3715_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3715_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B3717_005, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B3719_003, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASP-1B3719_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3720_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3720_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3720_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3722_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3725_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3725_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3733_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B3734_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3734_003, retry
+
+   WARNING: Delphi failed at focusing depth 3 of HIS+1B3734_006, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3737_004, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLU-1B3737_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3741_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CTR02B3741_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B3741_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B3741_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B3741_004, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of NTR01B3747_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3747_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3747_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3750_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3750_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3750_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3750_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3752_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3752_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3754_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3754_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3755_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3755_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3756_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3757_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3757_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3757_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3757_004, retry
+
+   WARNING: Delphi failed at focusing depth 3 of MET01B3758_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3759_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3759_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3759_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3759_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3759_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3759_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3759_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3760_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3760_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3760_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3761_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3762_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3765_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3767_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLN01B3767_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLN01B3767_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3768_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3768_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3768_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3769_001, retry
+
+   WARNING: Delphi failed at focusing depth 4 of ARG02B3769_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B3769_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B3771_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B3771_006, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3772_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3773_001, retry
+
+   WARNING: Delphi failed at focusing depth 4 of ARG02B3773_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B3778_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B3778_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 3 of CYS-1B3786_004, retry
+
+   WARNING: Delphi failed at focusing depth 3 of SER01B3796_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3797_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3806_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3806_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3809_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3809_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3811_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3811_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3811_002, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3811_005, retry
+
+   WARNING: Delphi failed at focusing depth 3 of MET01B3816_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3818_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B3819_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3819_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3824_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3825_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3825_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3825_003, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3825_003, retry
+   Trying changing scale on trial 4
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3831_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3833_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3837_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3838_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of SER01B3840_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3843_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3845_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3845_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3848_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3848_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3849_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3849_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3851_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3854_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3854_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B3858_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3860_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B3862_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3864_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3867_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3869_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3870_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3872_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3877_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3879_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3879_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3879_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3881_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3886_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3886_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3886_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3886_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3886_004, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3892_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3892_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 3 of CYS-1B3892_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3893_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3895_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3895_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3896_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3898_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3900_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B3902_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3904_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3904_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B3904_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3907_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3914_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3918_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3918_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3918_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3918_003, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3918_003, retry
+   Trying changing scale on trial 4
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3921_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3921_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3925_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B3925_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3927_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3928_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3928_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3929_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3932_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B3932_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3934_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3934_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B3936_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3936_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3937_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3937_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of TYR-1B3937_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3938_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3938_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3938_002, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3940_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3941_003, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3944_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3944_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3944_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3944_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3944_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 3 of GLU02B3945_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B3949_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3950_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASN01B3950_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3953_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3953_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3959_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3959_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3960_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3964_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3973_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3977_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3978_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3979_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B3982_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3982_003, retry
+
+   WARNING: Delphi failed at focusing depth 3 of HIS+1B3982_006, retry
+
+   WARNING: Delphi failed at focusing depth 3 of SER01B3983_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B3987_005, retry
+
+   WARNING: Delphi failed at focusing depth 3 of HIS01B3994_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B3994_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B3994_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3994_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3994_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4000_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4002_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4002_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4002_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4007_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4009_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B4011_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4014_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4014_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASP01B4018_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4018_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4020_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4020_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4021_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4022_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4022_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4029_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4032_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4032_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4032_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4032_005, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4043_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4046_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4046_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4047_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4050_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4050_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4050_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4051_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4052_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASN01B4054_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4056_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4056_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4056_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4056_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4056_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4056_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4060_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4060_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of CTR01B4062_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CTR02B4062_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CTR-1B4062_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4063_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4063_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of NTR+1B4063_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4063_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4063_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4063_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of MET01B4064_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4067_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4070_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4070_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4074_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4075_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4075_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4075_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4079_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4083_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B4085_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4085_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4089_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4090_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4092_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4094_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4098_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4098_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4098_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4101_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4107_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4107_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4107_003, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4107_003, retry
+   Trying changing scale on trial 4
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4109_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B4114_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4114_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4115_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4115_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4116_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4116_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4118_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4118_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4118_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4118_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4127_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4127_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4130_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4130_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B4131_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4131_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004, retry
+   Trying changing scale on trial 4
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4131_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4134_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4134_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4134_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4137_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4137_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4142_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4153_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B4153_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4153_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4153_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 3 of HIS02B4156_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B4156_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B4156_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B4156_006, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4159_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4161_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4161_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4162_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4165_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4165_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4168_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4169_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4172_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4173_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4173_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4173_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4175_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4175_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B4176_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4177_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4177_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4177_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4182_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4182_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4182_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4184_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4184_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4189_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4191_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4191_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4191_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4192_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4192_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4194_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4199_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4199_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4200_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ARG01B4202_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4202_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4202_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4202_003, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 3 of GLN01B4204_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4206_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4206_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4206_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4206_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4211_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4212_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4212_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4212_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4212_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4212_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4213_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4214_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4214_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4215_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4215_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4215_002, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4215_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4220_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4224_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4229_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4232_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4236_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS-1B4238_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4240_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4240_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4244_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4252_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4252_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4253_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4253_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4253_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4253_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4253_005, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4543_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4545_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4548_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4548_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4548_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4548_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4550_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4554_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4556_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4557_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4557_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4557_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4558_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4558_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4561_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4561_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4563_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4563_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4563_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4563_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4563_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4581_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4583_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CTR01B4587_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CTR02B4587_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CTR02B4587_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of NTR01B4626_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of MET01B4627_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4629_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4629_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4629_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of TYR-1B4630_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4633_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4634_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4636_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4638_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4638_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4640_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4640_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4640_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4645_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4645_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of CYS-1B4645_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS-1B4645_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4647_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4650_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B4657_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4657_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4662_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4663_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4665_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4673_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4673_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4674_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4674_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4674_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4675_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4675_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4676_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4676_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4679_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4679_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4682_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4682_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4682_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4682_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4684_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4684_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4684_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4684_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4687_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of THR01B4689_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4690_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4691_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4695_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4695_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4695_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4695_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4695_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4702_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4702_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4707_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4707_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4707_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4708_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4708_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4713_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4715_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4717_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4717_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4718_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4718_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4722_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4722_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4723_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4726_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4727_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4727_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4727_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4728_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4728_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4730_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4730_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4734_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4734_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4735_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4735_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4735_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4736_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4736_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4736_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4739_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4744_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4749_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4749_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4749_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4749_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4753_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4755_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4755_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4755_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4755_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4755_004, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B4756_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4756_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4756_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4766_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4772_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4772_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4772_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4774_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4774_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4775_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4776_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4779_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4779_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4786_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4786_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4786_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4787_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4787_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of SER01B4788_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4791_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4791_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4791_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4799_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4803_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4805_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4812_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4812_006, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4812_006, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4815_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4815_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4815_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4815_002, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4815_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4818_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4824_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4824_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4829_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4831_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4831_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B4832_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B4832_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B4832_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4840_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4860_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4861_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4864_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4865_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4865_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4865_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4866_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4866_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4867_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4868_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4869_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4869_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4869_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4870_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4870_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4870_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4871_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4871_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4871_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4873_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4873_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4878_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4878_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4881_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4881_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR-1B4883_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4886_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4886_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4886_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4892_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4892_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4899_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4899_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4903_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4903_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4907_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4908_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4909_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4909_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B4909_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B4909_004, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of CTR-1B4909_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4910_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4913_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4913_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4919_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4933_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4933_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CTR01B4933_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of NTG+1B4934_002, retry
+
+   WARNING: Delphi failed at focusing depth 3 of ASP01B4938_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4938_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4942_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4942_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4942_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4942_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4945_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4945_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4945_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4945_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4945_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4947_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4947_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4947_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4951_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4951_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4952_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4952_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4953_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS-1B4958_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS-1B4961_004, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4966_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4967_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4967_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4969_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4969_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4969_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4970_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4970_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_005, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_005, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_006, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_006, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4978_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4978_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4978_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B4978_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4978_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4978_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4979_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4979_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4979_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4981_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4981_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4982_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4982_003, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4983_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B4983_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4984_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4984_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4994_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4997_001, retry
+
+   WARNING: Delphi failed at focusing depth 3 of LYS+1B4998_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4999_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4999_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B5000_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B5000_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B5001_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B5002_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B5015_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B5016_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B5016_003, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B5016_003, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B5016_003, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B5018_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B5020_002, retry
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B5020_004, retry
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B5026_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B5027_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B5030_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B5032_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B5033_005, retry
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B5035_001, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5035_002, retry
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5035_002, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001, retry
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001, retry
+   Trying changing scale on trial 2
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001, retry
+   Trying changing scale on trial 3
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001, retry
+   Trying changing scale on trial 4
+   Done
+
+   Computing RXN from conformer 1 to 2399 of 2399 total conformers
+      see progress.log for progress...
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3615_002
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3617_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3626_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3628_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3628_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3629_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B3629_004
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B3630_006
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3637_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3637_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3637_003
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3639_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3639_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3642_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3643_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3643_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B3648_003
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B3652_001
+
+   WARNING: Delphi failed at focusing depth 3 of TYR-1B3657_002
+
+   WARNING: Delphi failed at focusing depth 3 of TYR-1B3657_002
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3658_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3658_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3665_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B3667_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B3667_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3667_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3667_004
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B3667_005
+
+   WARNING: Delphi failed at focusing depth 3 of HIS+1B3667_006
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B3668_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3671_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3671_004
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3671_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3672_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3675_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3675_003
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B3678_002
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3679_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3682_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3684_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3685_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3686_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3687_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3687_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3687_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3688_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3688_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3691_003
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3692_001
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3692_002
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3694_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3694_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B3696_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3704_004
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3704_006
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3708_001
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3708_002
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3711_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3711_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3711_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3712_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3713_001
+
+   WARNING: Delphi failed at focusing depth 3 of LYS01B3715_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3715_002
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B3719_003
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B3719_005
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3720_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3722_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3725_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3725_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3725_002
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3731_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B3734_001
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B3734_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3734_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3734_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3734_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3737_004
+
+   WARNING: Delphi failed at focusing depth 3 of GLU-1B3737_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3741_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3747_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3747_005
+
+   WARNING: Delphi failed at focusing depth 3 of GLU02B3750_004
+
+   WARNING: Delphi failed at focusing depth 3 of GLU-1B3750_005
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B3752_001
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3752_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3754_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3755_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3755_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3755_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3759_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3759_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3759_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3759_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3759_005
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3760_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3760_002
+
+   WARNING: Delphi failed at focusing depth 3 of GLN01B3761_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3762_003
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3765_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3766_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3767_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3767_001
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3768_001
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3768_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3769_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3769_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3771_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3771_003
+
+   WARNING: Delphi failed at focusing depth 1 of HIS+1B3771_006
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3772_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3773_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B3773_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3773_005
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B3778_001
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3786_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3789_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3789_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3789_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3789_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3789_005
+
+   WARNING: Delphi failed at focusing depth 3 of THR01B3797_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3799_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3806_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3806_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3809_002
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3811_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B3811_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3813_001
+
+   WARNING: Delphi failed at focusing depth 3 of MET01B3816_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3818_003
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B3819_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3819_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3825_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3825_003
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3831_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3833_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3837_001
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3838_001
+
+   WARNING: Delphi failed at focusing depth 3 of CYS01B3839_001
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B3839_002
+
+   WARNING: Delphi failed at focusing depth 3 of SER01B3840_003
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B3843_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3845_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3845_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B3848_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3849_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3849_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3849_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3851_002
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B3858_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3860_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3864_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B3867_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3869_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3873_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3877_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3877_003
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B3877_004
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3879_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B3879_003
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3881_001
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3881_001
+
+   WARNING: Delphi failed at focusing depth 3 of THR01B3881_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B3886_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B3886_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3886_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3886_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B3886_004
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3892_002
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3892_003
+
+   WARNING: Delphi failed at focusing depth 3 of CYS-1B3892_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B3893_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B3893_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3895_005
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3896_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3897_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B3898_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3900_002
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B3902_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B3904_001
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B3907_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B3910_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B3914_002
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B3918_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B3925_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B3925_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B3927_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B3928_005
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3931_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B3932_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B3932_005
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3934_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B3934_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3937_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B3937_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B3940_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B3941_005
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B3944_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B3949_002
+
+   WARNING: Delphi failed at focusing depth 3 of ASN01B3950_002
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B3953_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B3959_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B3959_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3970_001
+
+   WARNING: Delphi failed at focusing depth 3 of CYS01B3973_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3977_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3977_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B3978_002
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B3979_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B3982_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B3982_003
+
+   WARNING: Delphi failed at focusing depth 3 of HIS+1B3982_006
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B3987_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3994_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3994_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B3998_003
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4002_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4006_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4006_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4006_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4006_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4009_002
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B4011_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4014_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4018_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4020_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4021_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4022_003
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4022_004
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4029_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4032_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4032_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4032_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4032_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4037_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4042_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4042_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4042_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4043_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4046_003
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4047_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4050_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4050_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4050_005
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4051_001
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4051_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4056_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4056_004
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4060_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4060_001
+
+   WARNING: Delphi failed at focusing depth 2 of CTR-1B4062_005
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4063_001
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4063_001
+
+   WARNING: Delphi failed at focusing depth 1 of NTR+1B4063_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4063_001
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4063_004
+
+   WARNING: Delphi failed at focusing depth 1 of MET01B4064_001
+
+   WARNING: Delphi failed at focusing depth 1 of MET01B4064_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4067_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4067_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4075_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4075_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4075_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4075_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4075_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4083_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4085_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4085_005
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4089_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4092_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4094_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4098_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4098_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4100_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4101_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4107_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4107_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4107_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4109_002
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4113_001
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B4114_001
+
+   WARNING: Delphi failed at focusing depth 2 of CYS-1B4114_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4116_005
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4118_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4118_005
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B4121_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4124_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4126_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4126_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4126_002
+
+   WARNING: Delphi failed at focusing depth 3 of GLU02B4126_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4127_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4130_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4130_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4130_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B4131_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4131_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4131_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4131_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4134_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4134_005
+
+   WARNING: Delphi failed at focusing depth 2 of CTR02B4135_004
+
+   WARNING: Delphi failed at focusing depth 1 of NTR01B4136_001
+
+   WARNING: Delphi failed at focusing depth 2 of NTR+1B4136_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4138_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4138_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4138_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4142_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4142_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4142_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4153_001
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B4153_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4157_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4159_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4161_004
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4162_001
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4169_001
+
+   WARNING: Delphi failed at focusing depth 3 of GLU-1B4172_005
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4173_001
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4173_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4173_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4175_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4175_003
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B4176_004
+
+   WARNING: Delphi failed at focusing depth 1 of CTR-1B4176_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4182_003
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4184_001
+
+   WARNING: Delphi failed at focusing depth 3 of SER01B4187_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4188_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4191_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4191_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4191_005
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4192_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4192_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4196_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4196_004
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4198_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4199_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4199_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4200_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASN01B4201_001
+
+   WARNING: Delphi failed at focusing depth 3 of ARG01B4202_001
+
+   WARNING: Delphi failed at focusing depth 3 of GLN01B4204_001
+
+   WARNING: Delphi failed at focusing depth 3 of GLU01B4206_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4206_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4206_005
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4211_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4212_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4212_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4212_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4212_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4212_005
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4213_001
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4213_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4215_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4215_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4224_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4224_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4232_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4232_002
+
+   WARNING: Delphi failed at focusing depth 3 of CYS01B4238_001
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4238_002
+
+   WARNING: Delphi failed at focusing depth 3 of ASP01B4240_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4240_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4240_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4240_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4240_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4240_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4244_001
+
+   WARNING: Delphi failed at focusing depth 3 of GLN01B4250_002
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4252_001
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4252_002
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4252_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4253_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4253_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4253_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4543_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4543_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4545_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4548_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4548_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4548_002
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4550_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4554_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4557_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4557_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4557_003
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4557_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4558_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4560_003
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4561_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4563_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4563_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4563_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4563_003
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4585_001
+
+   WARNING: Delphi failed at focusing depth 2 of CTR01B4587_002
+
+   WARNING: Delphi failed at focusing depth 2 of CTR02B4587_003
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4629_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4629_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4629_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4634_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4634_003
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4638_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4638_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4638_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4638_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4640_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4640_004
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4645_001
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4645_002
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4645_002
+
+   WARNING: Delphi failed at focusing depth 2 of CYS-1B4645_004
+
+   WARNING: Delphi failed at focusing depth 2 of CYS-1B4645_004
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4650_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4650_001
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B4657_003
+
+   WARNING: Delphi failed at focusing depth 2 of CYS01B4657_003
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4661_002
+
+   WARNING: Delphi failed at focusing depth 3 of CYS01B4663_003
+
+   WARNING: Delphi failed at focusing depth 3 of CYS01B4663_003
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4665_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4673_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG03B4673_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4674_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4674_005
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4675_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4676_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4676_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4676_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4676_005
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4679_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4682_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4682_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4682_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4682_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4684_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4684_003
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4684_005
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4687_002
+
+   WARNING: Delphi failed at focusing depth 3 of THR01B4689_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4690_002
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4691_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4695_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4698_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4702_001
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4702_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4702_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4707_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4707_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4707_002
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4708_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4708_002
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4708_003
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4713_002
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4715_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4717_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4717_004
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4718_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4722_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4722_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4722_004
+
+   WARNING: Delphi failed at focusing depth 1 of LYS01B4723_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4727_001
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4728_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4730_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4730_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4730_004
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B4734_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4734_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4734_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4735_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4735_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4735_005
+
+   WARNING: Delphi failed at focusing depth 1 of ARG01B4736_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4736_003
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4736_004
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4736_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B4739_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4739_002
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4743_001
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4743_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4744_002
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4747_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4749_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4749_004
+
+   WARNING: Delphi failed at focusing depth 3 of GLU-1B4749_005
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4755_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4755_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4755_004
+
+   WARNING: Delphi failed at focusing depth 1 of ARG02B4756_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4756_002
+
+   WARNING: Delphi failed at focusing depth 2 of ARG02B4756_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4756_005
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4766_001
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4769_001
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4772_003
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4772_004
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4774_002
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4774_002
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4779_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4786_002
+
+   WARNING: Delphi failed at focusing depth 3 of ASP02B4786_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4787_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4791_003
+
+   WARNING: Delphi failed at focusing depth 1 of SER01B4799_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4803_001
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4812_006
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4815_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4815_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4815_004
+
+   WARNING: Delphi failed at focusing depth 2 of MET01B4818_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4824_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B4824_004
+
+   WARNING: Delphi failed at focusing depth 2 of SER01B4829_002
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4831_001
+
+   WARNING: Delphi failed at focusing depth 3 of HIS02B4832_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B4832_004
+
+   WARNING: Delphi failed at focusing depth 3 of ASN01B4833_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B4835_002
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4840_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4864_001
+
+   WARNING: Delphi failed at focusing depth 2 of LYS01B4865_001
+
+   WARNING: Delphi failed at focusing depth 1 of LYS+1B4865_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4867_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4867_005
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4868_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4869_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4869_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4871_005
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4873_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4873_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4878_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4878_004
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4881_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B4886_004
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4888_001
+
+   WARNING: Delphi failed at focusing depth 2 of ARG01B4892_001
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4892_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4899_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4899_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4899_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4899_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4899_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4902_004
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4903_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B4907_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4907_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4907_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4907_003
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4909_001
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B4909_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4909_002
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B4909_004
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B4910_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG03B4913_003
+
+   WARNING: Delphi failed at focusing depth 2 of ARG+1B4913_004
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4919_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4933_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4933_002
+
+   WARNING: Delphi failed at focusing depth 1 of CTR01B4933_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4938_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4938_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4938_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4938_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4942_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4942_005
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4945_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4945_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4945_002
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4945_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B4947_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4947_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B4947_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4948_003
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B4948_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4948_004
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B4952_005
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B4953_004
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4956_001
+
+   WARNING: Delphi failed at focusing depth 1 of CYS-1B4958_004
+
+   WARNING: Delphi failed at focusing depth 3 of CYS01B4961_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4967_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASP01B4969_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4969_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4969_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4969_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B4969_005
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4970_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4970_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4970_001
+
+   WARNING: Delphi failed at focusing depth 2 of HIS01B4973_001
+
+   WARNING: Delphi failed at focusing depth 2 of HIS02B4973_004
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_005
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_006
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4973_006
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B4976_005
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B4977_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4978_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4978_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS01B4978_001
+
+   WARNING: Delphi failed at focusing depth 1 of HIS02B4978_002
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4978_003
+
+   WARNING: Delphi failed at focusing depth 2 of HIS+1B4978_003
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4979_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4979_001
+
+   WARNING: Delphi failed at focusing depth 2 of THR01B4979_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4981_003
+
+   WARNING: Delphi failed at focusing depth 1 of GLU02B4982_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4984_001
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4984_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4988_001
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4988_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4988_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4988_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4994_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B4994_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR-1B4994_003
+
+   WARNING: Delphi failed at focusing depth 2 of ASN01B4997_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP02B4999_004
+
+   WARNING: Delphi failed at focusing depth 2 of ASP-1B4999_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B5000_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B5000_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B5000_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU-1B5000_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLU01B5002_001
+
+   WARNING: Delphi failed at focusing depth 3 of HIS01B5003_002
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B5004_002
+
+   WARNING: Delphi failed at focusing depth 1 of THR01B5004_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLU02B5007_003
+
+   WARNING: Delphi failed at focusing depth 1 of TYR01B5014_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B5015_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B5015_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLU01B5016_001
+
+   WARNING: Delphi failed at focusing depth 1 of ASP01B5020_002
+
+   WARNING: Delphi failed at focusing depth 2 of ASP02B5026_004
+
+   WARNING: Delphi failed at focusing depth 1 of CYS01B5027_002
+
+   WARNING: Delphi failed at focusing depth 1 of ARG+1B5029_004
+
+   WARNING: Delphi failed at focusing depth 2 of LYS+1B5030_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5031_002
+
+   WARNING: Delphi failed at focusing depth 2 of TYR01B5032_001
+
+   WARNING: Delphi failed at focusing depth 1 of GLU-1B5033_005
+
+   WARNING: Delphi failed at focusing depth 1 of ASP-1B5034_005
+
+   WARNING: Delphi failed at focusing depth 1 of GLN01B5035_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5035_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5035_001
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5035_002
+
+   WARNING: Delphi failed at focusing depth 2 of GLN01B5035_002
+
+   WARNING: Delphi failed at focusing depth 2 of CTR01B5037_002
+
+   WARNING: Delphi failed at focusing depth 1 of CTR02B5037_004
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001
+
+   WARNING: Delphi failed at focusing depth 1 of _CA+2B7000_001
+   Done
+
+   Add dummy conformers ... 1 dummy conformers were added.
+   Done
+
+   Making pairwise energy matrices and conformer summary ... 
+energies.opp not found
+   WARNING: No EM entry for _CADM, set to 0.
+   WARNING: No PKA entry for _CADM, set to 0.
+   WARNING: no PROTON for _CADM, 0 assumed
+   WARNING: no ELECTRON for _CADM, 0 assumed
+   WARNING: No RXN entry for _CADM, set to 0.
+   Done
+
+   Skiping writing step 3 rotamer file step3_out.pdb.
+   Total time for step3 (energy calculation) is 24691 seconds.
+
+   Output files (epsilon = 4.00):
+      energies.opp    : energy lookup table, use opp to decode the file
+      head3.lst       : conformer summary
+
+Step 3 Done.
+
+Not doing "Step 4. Monte Carlo Sampling"
+
+===========================================================
+<<< MCCE Multi-Conformation Continuum Electrostatics >>>   
+ Marilyn Gunner's Lab at City College of New York, 2005    
+-----------------------------------------------------------
+Version:        2.5.1                                      
+MCCE Home Page: http://www.sci.ccny.cuny.edu/~gunner/mcce  
+Support:        gunner@sci.ccny.cuny.edu                   
+Developed by:   Junjun Mao, Yifan Song, Marilyn Gunner     
+Reference MCCE: If you publish data calculated with MCCE,  
+                you need to cite papers suggested in MCCE  
+                Home Page.                                 
+===========================================================
+
+Last Updates:                                              
+   04/10, Added Pascal Comte's GA/SA algorithm for sidechain
+          packing and sampling.     			      
+   04/10, Added APBS electrostatic calculation option      
+   08/08, Total pairwise is set to be 999.0 if vdw is 999.0
+   08/02, step 3, zero interaction bug fixed               
+   07/23, step 1 changes the policy on AltLoc backbone atoms
+          now it is warning instead of fatal error.        
+   06/22, step 1 recognizes FME and ACE as NTR caps        
+   05/27, step 2 reduces rotation steps for surface residues
+          The run.prm.default uses 0.25 SAS to decide suface
+          residues.                                        
+   05/04, Program doesn't stop at duplicate parameters,    
+          it issues a warning message. This fixes the deadlock
+          caused by multiple new cofactors                 
+   04/24, Energy lookup table compressed, size is reduced  
+          to about 1/12                                    
+   04/24, Opp files are compressed. Temporary files are    
+          stored under local directory.                    
+   04/14, Step 2 rotamer pruning by pairwise corrected.    
+   04/08, Step 2 repacking now ses better H bnd correction.
+   01/26, Step 3 fixed incorrect errno message.            
+   01/14, Step 3 dielectric boundary condition improved.   
+   12/07, Step 3 dielectric boundary condition is corrected.
+   11/17, pKa fitting writes "pKa titration curve too sharp"
+          when occ jumps from 0.015 to 0.985.              
+   11/17, Exposed conformer is marked as E in history.     
+   11/02, Optional quick step 3 included.                  
+   11/02, Pruning fuction is added at the end of step 2.   
+          Parameter lines were added to run.prm.           
+   10/29, Temporary gdbm files have file names.            
+   10/11, Use biggest rxn energy from the last 3 delphi    
+          focusing runs.                                   
+===========================================================
+
+Step 0. Initialize enviroment
+   Load run control file "run.prm"...
+   Done
+   Tentatively load local param file "new.tpl"...   No such file, ignore.
+   Done
+   Load parameters from directory "/home/mcce/mcce2.5.1//param04" ... 
+
+   In file /home/mcce/mcce2.5.1//param04/hmc.tpl, parameter "CONNECT  HMC01  CAB sp2       0     C3B 0     CBB LIG   SG" is already loaded somewhere else.
+   Try delete this entry and run MCCE again
+   Done
+   Load linear free energy correction parameters from "/home/mcce/mcce2.5.1/extra.tpl".../home/mcce/mcce2.5.1/extra.tpl
+   File loaded.
+   Done
+Step 0 Done.
+
+Not doing "Step 1. Test and format structral file"
+
+Not doing "Step 2. Make multi side chain conformers"
+
+Not doing "Step 3. Compute energy lookup table"
+
+Step 4. Monte Carlo Sampling
+   Load conformer list from file "head3.lst" ...
+   Scaling factors:
+   VDW0  = 1.000:
+   VDW1  = 1.000:
+   VDW   = 1.000:
+   TORS  = 1.000:
+   ELE   = 1.000:
+   DSOLV = 1.000:
+   Done
+   Load pairwise interactions ...
+   Done
+   Verify self consistancy of conformer flag ...
+   ALA01B3618_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3619_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B3620_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3623_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3624_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B3627_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3631_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3632_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3633_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3634_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3636_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3638_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B3640_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3641_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3644_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B3645_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3646_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3649_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3652_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3653_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3654_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B3656_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3659_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3660_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B3661_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3662_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3663_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3664_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B3668_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3669_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3673_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3674_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3677_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3680_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B3683_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3690_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B3695_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B3697_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3698_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3701_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3702_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3703_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3705_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3709_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3710_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3711_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B3714_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3716_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3721_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3723_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3724_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3726_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3728_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3729_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3730_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3735_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3749_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3751_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3753_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3758_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3763_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3764_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3770_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3775_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3776_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3778_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3779_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3780_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3782_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3783_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B3784_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3785_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3792_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3793_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3794_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3798_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3800_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3802_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3804_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3805_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3810_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3812_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3816_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3817_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3820_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3826_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3828_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3829_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3832_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3834_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3835_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3836_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3841_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3842_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3844_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3846_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3847_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B3850_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3853_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3856_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3858_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3859_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B3860_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3865_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3866_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B3867_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B3869_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B3870_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3874_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3875_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3876_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3880_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3884_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3885_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3887_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3888_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3890_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3891_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3899_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3903_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3905_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B3906_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3907_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3910_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3911_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3912_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3913_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3915_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3916_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3917_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3920_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3923_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3924_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3926_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3930_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3933_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B3935_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3942_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3943_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3951_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3954_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3955_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3957_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3958_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3961_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3962_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3965_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B3969_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B3972_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B3974_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3980_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3981_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3985_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B3986_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3988_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3989_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3990_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3992_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B3993_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B3995_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B3996_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B3997_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B3999_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4000_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4001_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4003_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4004_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B4007_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4010_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4012_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4013_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4016_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4017_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4019_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4023_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4024_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4025_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4026_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4027_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4028_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4030_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4031_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4035_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4036_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4039_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4040_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4041_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4044_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4045_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4047_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4048_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4049_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4055_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4057_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4058_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4059_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4061_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4062_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4064_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4065_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4066_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4068_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4071_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4072_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4076_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4077_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4081_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B4082_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4084_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4087_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4088_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4093_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4096_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4097_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B4102_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4103_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4106_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4108_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4110_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4111_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4112_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4117_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4122_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4123_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4125_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4128_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4129_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4132_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4135_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4136_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4139_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4141_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4143_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4144_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4145_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4146_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4147_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4150_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4154_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4155_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4158_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4160_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4163_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4164_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4166_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4167_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4170_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4171_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4174_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4176_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4178_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4181_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4183_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4184_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4186_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B4187_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4190_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4193_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4195_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4197_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B4200_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4203_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4205_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4207_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4208_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4210_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4217_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4218_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4219_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4221_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4222_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4228_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4231_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4233_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4234_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4235_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4237_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4242_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4243_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4245_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4247_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4248_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4249_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4251_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4540_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4541_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4544_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4546_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4549_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4551_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4552_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4555_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B4556_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B4558_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4559_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4562_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4564_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4565_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4566_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4567_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4568_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4569_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4570_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4571_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4572_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4573_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4575_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4576_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4577_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4578_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4579_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4582_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4586_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4587_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B4626_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4627_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4628_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4631_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4632_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B4635_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4639_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4641_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4642_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4643_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4644_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4646_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4648_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4649_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4652_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4653_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4654_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4655_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4656_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4658_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4659_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4664_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4666_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4667_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4668_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4669_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4670_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4671_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4677_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4678_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4681_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4683_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4686_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4688_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4692_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4697_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4701_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4704_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4705_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4706_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4709_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4711_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4712_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4716_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4719_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4720_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4724_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4725_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4731_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4732_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4737_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4738_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4740_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4741_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4743_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4745_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4746_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4748_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4750_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4752_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B4754_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4758_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4760_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4761_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4762_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4764_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4765_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4767_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4768_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4769_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01B4770_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4771_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4773_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4777_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4778_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4780_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4782_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4783_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4784_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4789_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4790_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4792_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B4794_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4796_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4797_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4798_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4800_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4801_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4807_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4808_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4809_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4810_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4811_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4813_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4814_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4816_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4817_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4818_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4820_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4823_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4826_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4827_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4830_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4837_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4838_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4839_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B4840_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4841_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4843_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4844_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4845_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4846_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4847_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4848_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4850_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4853_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4854_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4855_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4856_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4858_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4859_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4862_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01B4864_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4872_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4874_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4879_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4880_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4884_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4885_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4887_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4889_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4891_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4893_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4897_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4901_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4904_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4905_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4911_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4914_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4915_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4916_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4918_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4920_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4921_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4922_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4923_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4924_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4925_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4926_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4927_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4928_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4929_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4930_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4931_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4932_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4935_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4936_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4937_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4939_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4940_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4943_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B4950_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4954_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4959_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4960_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4963_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4968_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01B4970_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B4972_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4975_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4980_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4985_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B4986_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4989_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4990_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B4991_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4992_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B4993_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B4995_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01B4996_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B5006_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01B5010_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B5011_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01B5013_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01B5015_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01B5019_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B5021_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B5022_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01B5023_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01B5024_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01B5028_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01B5036_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   Conformer flags updated due to self consistancy.
+   Do titration at 240 points...
+   Detailed progress is in file "mc_out"
+   Monte Carlo set up time: 1 seconds.
+   Titration  1:    68 seconds, biggest stdev of conformer occ = 0.077
+   Titration  2:    81 seconds, biggest stdev of conformer occ = 0.074
+   Titration  3:    73 seconds, biggest stdev of conformer occ = 0.070
+   Titration  4:    76 seconds, biggest stdev of conformer occ = 0.067
+   Titration  5:    94 seconds, biggest stdev of conformer occ = 0.065
+   Titration  6:    86 seconds, biggest stdev of conformer occ = 0.077
+   Titration  7:    71 seconds, biggest stdev of conformer occ = 0.062
+   Titration  8:    77 seconds, biggest stdev of conformer occ = 0.070
+   Titration  9:    72 seconds, biggest stdev of conformer occ = 0.075
+   Titration 10:    73 seconds, biggest stdev of conformer occ = 0.065
+   Titration 11:    95 seconds, biggest stdev of conformer occ = 0.061
+   Titration 12:    89 seconds, biggest stdev of conformer occ = 0.063
+   Titration 13:    85 seconds, biggest stdev of conformer occ = 0.082
+   Titration 14:    70 seconds, biggest stdev of conformer occ = 0.056
+   Titration 15:    70 seconds, biggest stdev of conformer occ = 0.044
+   Titration 16:    73 seconds, biggest stdev of conformer occ = 0.061
+   Titration 17:    80 seconds, biggest stdev of conformer occ = 0.065
+   Titration 18:    77 seconds, biggest stdev of conformer occ = 0.087
+   Titration 19:   107 seconds, biggest stdev of conformer occ = 0.069
+   Titration 20:    84 seconds, biggest stdev of conformer occ = 0.056
+   Titration 21:    72 seconds, biggest stdev of conformer occ = 0.053
+   Titration 22:    82 seconds, biggest stdev of conformer occ = 0.062
+   Titration 23:    72 seconds, biggest stdev of conformer occ = 0.061
+   Titration 24:    71 seconds, biggest stdev of conformer occ = 0.122
+   Titration 25:    76 seconds, biggest stdev of conformer occ = 0.051
+   Titration 26:    74 seconds, biggest stdev of conformer occ = 0.071
+   Titration 27:    87 seconds, biggest stdev of conformer occ = 0.086
+   Titration 28:    70 seconds, biggest stdev of conformer occ = 0.082
+   Titration 29:    88 seconds, biggest stdev of conformer occ = 0.082
+   Titration 30:    80 seconds, biggest stdev of conformer occ = 0.069
+   Titration 31:    72 seconds, biggest stdev of conformer occ = 0.074
+   Titration 32:    72 seconds, biggest stdev of conformer occ = 0.055
+   Titration 33:    74 seconds, biggest stdev of conformer occ = 0.065
+   Titration 34:    72 seconds, biggest stdev of conformer occ = 0.056
+   Titration 35:    73 seconds, biggest stdev of conformer occ = 0.060
+   Titration 36:    72 seconds, biggest stdev of conformer occ = 0.084
+   Titration 37:    78 seconds, biggest stdev of conformer occ = 0.066
+   Titration 38:    89 seconds, biggest stdev of conformer occ = 0.072
+   Titration 39:    71 seconds, biggest stdev of conformer occ = 0.068
+   Titration 40:    75 seconds, biggest stdev of conformer occ = 0.069
+   Titration 41:    72 seconds, biggest stdev of conformer occ = 0.079
+   Titration 42:    74 seconds, biggest stdev of conformer occ = 0.080
+   Titration 43:    70 seconds, biggest stdev of conformer occ = 0.067
+   Titration 44:    72 seconds, biggest stdev of conformer occ = 0.057
+   Titration 45:    74 seconds, biggest stdev of conformer occ = 0.088
+   Titration 46:   115 seconds, biggest stdev of conformer occ = 0.084
+   Titration 47:    81 seconds, biggest stdev of conformer occ = 0.045
+   Titration 48:    78 seconds, biggest stdev of conformer occ = 0.120
+   Titration 49:    98 seconds, biggest stdev of conformer occ = 0.074
+   Titration 50:    78 seconds, biggest stdev of conformer occ = 0.066
+   Titration 51:    70 seconds, biggest stdev of conformer occ = 0.064
+   Titration 52:    70 seconds, biggest stdev of conformer occ = 0.097
+   Titration 53:    81 seconds, biggest stdev of conformer occ = 0.058
+   Titration 54:    71 seconds, biggest stdev of conformer occ = 0.055
+   Titration 55:    90 seconds, biggest stdev of conformer occ = 0.064
+   Titration 56:    72 seconds, biggest stdev of conformer occ = 0.068
+   Titration 57:    94 seconds, biggest stdev of conformer occ = 0.074
+   Titration 58:    79 seconds, biggest stdev of conformer occ = 0.065
+   Titration 59:    72 seconds, biggest stdev of conformer occ = 0.065
+   Titration 60:    73 seconds, biggest stdev of conformer occ = 0.069
+   Titration 61:    72 seconds, biggest stdev of conformer occ = 0.075
+   Titration 62:    70 seconds, biggest stdev of conformer occ = 0.075
+   Titration 63:    91 seconds, biggest stdev of conformer occ = 0.088
+   Titration 64:    72 seconds, biggest stdev of conformer occ = 0.079
+   Titration 65:    79 seconds, biggest stdev of conformer occ = 0.065
+   Titration 66:    77 seconds, biggest stdev of conformer occ = 0.059
+   Titration 67:    70 seconds, biggest stdev of conformer occ = 0.068
+   Titration 68:    69 seconds, biggest stdev of conformer occ = 0.073
+   Titration 69:    67 seconds, biggest stdev of conformer occ = 0.066
+   Titration 70:    96 seconds, biggest stdev of conformer occ = 0.058
+   Titration 71:    75 seconds, biggest stdev of conformer occ = 0.079
+   Titration 72:    73 seconds, biggest stdev of conformer occ = 0.068
+   Titration 73:    69 seconds, biggest stdev of conformer occ = 0.074
+   Titration 74:    70 seconds, biggest stdev of conformer occ = 0.075
+   Titration 75:    78 seconds, biggest stdev of conformer occ = 0.067
+   Titration 76:    73 seconds, biggest stdev of conformer occ = 0.056
+   Titration 77:    81 seconds, biggest stdev of conformer occ = 0.079
+   Titration 78:    73 seconds, biggest stdev of conformer occ = 0.058
+   Titration 79:    69 seconds, biggest stdev of conformer occ = 0.064
+   Titration 80:    73 seconds, biggest stdev of conformer occ = 0.058
+   Titration 81:    86 seconds, biggest stdev of conformer occ = 0.088
+   Titration 82:    90 seconds, biggest stdev of conformer occ = 0.056
+   Titration 83:    81 seconds, biggest stdev of conformer occ = 0.067
+   Titration 84:    70 seconds, biggest stdev of conformer occ = 0.073
+   Titration 85:    79 seconds, biggest stdev of conformer occ = 0.058
+   Titration 86:    72 seconds, biggest stdev of conformer occ = 0.078
+   Titration 87:    77 seconds, biggest stdev of conformer occ = 0.052
+   Titration 88:    70 seconds, biggest stdev of conformer occ = 0.087
+   Titration 89:    72 seconds, biggest stdev of conformer occ = 0.070
+   Titration 90:   130 seconds, biggest stdev of conformer occ = 0.050
+   Titration 91:    89 seconds, biggest stdev of conformer occ = 0.077
+   Titration 92:    89 seconds, biggest stdev of conformer occ = 0.056
+   Titration 93:   104 seconds, biggest stdev of conformer occ = 0.072
+   Titration 94:    70 seconds, biggest stdev of conformer occ = 0.104
+   Titration 95:    89 seconds, biggest stdev of conformer occ = 0.073
+   Titration 96:    69 seconds, biggest stdev of conformer occ = 0.064
+   Titration 97:    70 seconds, biggest stdev of conformer occ = 0.080
+   Titration 98:    84 seconds, biggest stdev of conformer occ = 0.061
+   Titration 99:    73 seconds, biggest stdev of conformer occ = 0.051
+   Titration 100:   146 seconds, biggest stdev of conformer occ = 0.090
+   Titration 101:    71 seconds, biggest stdev of conformer occ = 0.060
+   Titration 102:    68 seconds, biggest stdev of conformer occ = 0.072
+   Titration 103:    70 seconds, biggest stdev of conformer occ = 0.076
+   Titration 104:    71 seconds, biggest stdev of conformer occ = 0.070
+   Titration 105:    70 seconds, biggest stdev of conformer occ = 0.054
+   Titration 106:    69 seconds, biggest stdev of conformer occ = 0.084
+   Titration 107:    72 seconds, biggest stdev of conformer occ = 0.106
+   Titration 108:    76 seconds, biggest stdev of conformer occ = 0.071
+   Titration 109:    72 seconds, biggest stdev of conformer occ = 0.058
+   Titration 110:    79 seconds, biggest stdev of conformer occ = 0.067
+   Titration 111:    78 seconds, biggest stdev of conformer occ = 0.067
+   Titration 112:    75 seconds, biggest stdev of conformer occ = 0.087
+   Titration 113:    97 seconds, biggest stdev of conformer occ = 0.044
+   Titration 114:    80 seconds, biggest stdev of conformer occ = 0.045
+   Titration 115:    77 seconds, biggest stdev of conformer occ = 0.070
+   Titration 116:    80 seconds, biggest stdev of conformer occ = 0.061
+   Titration 117:    82 seconds, biggest stdev of conformer occ = 0.077
+   Titration 118:    89 seconds, biggest stdev of conformer occ = 0.066
+   Titration 119:    70 seconds, biggest stdev of conformer occ = 0.068
+   Titration 120:    78 seconds, biggest stdev of conformer occ = 0.068
+   Titration 121:    99 seconds, biggest stdev of conformer occ = 0.064
+   Titration 122:    80 seconds, biggest stdev of conformer occ = 0.076
+   Titration 123:    70 seconds, biggest stdev of conformer occ = 0.067
+   Titration 124:    69 seconds, biggest stdev of conformer occ = 0.072
+   Titration 125:    69 seconds, biggest stdev of conformer occ = 0.064
+   Titration 126:    80 seconds, biggest stdev of conformer occ = 0.049
+   Titration 127:    72 seconds, biggest stdev of conformer occ = 0.080
+   Titration 128:    70 seconds, biggest stdev of conformer occ = 0.080
+   Titration 129:    70 seconds, biggest stdev of conformer occ = 0.070
+   Titration 130:    81 seconds, biggest stdev of conformer occ = 0.063
+   Titration 131:    98 seconds, biggest stdev of conformer occ = 0.077
+   Titration 132:    73 seconds, biggest stdev of conformer occ = 0.059
+   Titration 133:    81 seconds, biggest stdev of conformer occ = 0.052
+   Titration 134:    69 seconds, biggest stdev of conformer occ = 0.096
+   Titration 135:    75 seconds, biggest stdev of conformer occ = 0.067
+   Titration 136:    69 seconds, biggest stdev of conformer occ = 0.061
+   Titration 137:    70 seconds, biggest stdev of conformer occ = 0.073
+   Titration 138:    70 seconds, biggest stdev of conformer occ = 0.051
+   Titration 139:    71 seconds, biggest stdev of conformer occ = 0.059
+   Titration 140:    78 seconds, biggest stdev of conformer occ = 0.060
+   Titration 141:    74 seconds, biggest stdev of conformer occ = 0.082
+   Titration 142:    69 seconds, biggest stdev of conformer occ = 0.054
+   Titration 143:    69 seconds, biggest stdev of conformer occ = 0.079
+   Titration 144:   106 seconds, biggest stdev of conformer occ = 0.045
+   Titration 145:    78 seconds, biggest stdev of conformer occ = 0.076
+   Titration 146:    80 seconds, biggest stdev of conformer occ = 0.084
+   Titration 147:    72 seconds, biggest stdev of conformer occ = 0.072
+   Titration 148:    73 seconds, biggest stdev of conformer occ = 0.060
+   Titration 149:    70 seconds, biggest stdev of conformer occ = 0.069
+   Titration 150:    91 seconds, biggest stdev of conformer occ = 0.059
+   Titration 151:    78 seconds, biggest stdev of conformer occ = 0.115
+   Titration 152:    79 seconds, biggest stdev of conformer occ = 0.076
+   Titration 153:    70 seconds, biggest stdev of conformer occ = 0.078
+   Titration 154:    70 seconds, biggest stdev of conformer occ = 0.064
+   Titration 155:    87 seconds, biggest stdev of conformer occ = 0.061
+   Titration 156:   113 seconds, biggest stdev of conformer occ = 0.064
+   Titration 157:    69 seconds, biggest stdev of conformer occ = 0.080
+   Titration 158:    88 seconds, biggest stdev of conformer occ = 0.069
+   Titration 159:    94 seconds, biggest stdev of conformer occ = 0.070
+   Titration 160:    89 seconds, biggest stdev of conformer occ = 0.072
+   Titration 161:    87 seconds, biggest stdev of conformer occ = 0.073
+   Titration 162:    72 seconds, biggest stdev of conformer occ = 0.060
+   Titration 163:    81 seconds, biggest stdev of conformer occ = 0.076
+   Titration 164:    80 seconds, biggest stdev of conformer occ = 0.074
+   Titration 165:    80 seconds, biggest stdev of conformer occ = 0.068
+   Titration 166:    69 seconds, biggest stdev of conformer occ = 0.057
+   Titration 167:    71 seconds, biggest stdev of conformer occ = 0.092
+   Titration 168:    69 seconds, biggest stdev of conformer occ = 0.093
+   Titration 169:    81 seconds, biggest stdev of conformer occ = 0.081
+   Titration 170:    69 seconds, biggest stdev of conformer occ = 0.084
+   Titration 171:    77 seconds, biggest stdev of conformer occ = 0.066
+   Titration 172:    69 seconds, biggest stdev of conformer occ = 0.072
+   Titration 173:    71 seconds, biggest stdev of conformer occ = 0.084
+   Titration 174:    97 seconds, biggest stdev of conformer occ = 0.098
+   Titration 175:    73 seconds, biggest stdev of conformer occ = 0.085
+   Titration 176:    77 seconds, biggest stdev of conformer occ = 0.084
+   Titration 177:    83 seconds, biggest stdev of conformer occ = 0.050
+   Titration 178:    94 seconds, biggest stdev of conformer occ = 0.082
+   Titration 179:    78 seconds, biggest stdev of conformer occ = 0.065
+   Titration 180:    90 seconds, biggest stdev of conformer occ = 0.076
+   Titration 181:    80 seconds, biggest stdev of conformer occ = 0.066
+   Titration 182:    75 seconds, biggest stdev of conformer occ = 0.080
+   Titration 183:    70 seconds, biggest stdev of conformer occ = 0.062
+   Titration 184:    73 seconds, biggest stdev of conformer occ = 0.057
+   Titration 185:    78 seconds, biggest stdev of conformer occ = 0.072
+   Titration 186:    86 seconds, biggest stdev of conformer occ = 0.080
+   Titration 187:    69 seconds, biggest stdev of conformer occ = 0.075
+   Titration 188:    70 seconds, biggest stdev of conformer occ = 0.066
+   Titration 189:    79 seconds, biggest stdev of conformer occ = 0.091
+   Titration 190:    77 seconds, biggest stdev of conformer occ = 0.064
+   Titration 191:    72 seconds, biggest stdev of conformer occ = 0.056
+   Titration 192:    81 seconds, biggest stdev of conformer occ = 0.070
+   Titration 193:    95 seconds, biggest stdev of conformer occ = 0.083
+   Titration 194:    89 seconds, biggest stdev of conformer occ = 0.068
+   Titration 195:    81 seconds, biggest stdev of conformer occ = 0.067
+   Titration 196:    73 seconds, biggest stdev of conformer occ = 0.063
+   Titration 197:    86 seconds, biggest stdev of conformer occ = 0.075
+   Titration 198:    73 seconds, biggest stdev of conformer occ = 0.063
+   Titration 199:    78 seconds, biggest stdev of conformer occ = 0.052
+   Titration 200:    75 seconds, biggest stdev of conformer occ = 0.059
+   Titration 201:    93 seconds, biggest stdev of conformer occ = 0.053
+   Titration 202:    70 seconds, biggest stdev of conformer occ = 0.084
+   Titration 203:    71 seconds, biggest stdev of conformer occ = 0.051
+   Titration 204:    97 seconds, biggest stdev of conformer occ = 0.048
+   Titration 205:    81 seconds, biggest stdev of conformer occ = 0.083
+   Titration 206:    70 seconds, biggest stdev of conformer occ = 0.073
+   Titration 207:    72 seconds, biggest stdev of conformer occ = 0.095
+   Titration 208:    68 seconds, biggest stdev of conformer occ = 0.069
+   Titration 209:    71 seconds, biggest stdev of conformer occ = 0.079
+   Titration 210:   120 seconds, biggest stdev of conformer occ = 0.048
+   Titration 211:    99 seconds, biggest stdev of conformer occ = 0.061
+   Titration 212:    69 seconds, biggest stdev of conformer occ = 0.078
+   Titration 213:    70 seconds, biggest stdev of conformer occ = 0.100
+   Titration 214:    72 seconds, biggest stdev of conformer occ = 0.083
+   Titration 215:    73 seconds, biggest stdev of conformer occ = 0.053
+   Titration 216:    87 seconds, biggest stdev of conformer occ = 0.074
+   Titration 217:    81 seconds, biggest stdev of conformer occ = 0.075
+   Titration 218:    69 seconds, biggest stdev of conformer occ = 0.086
+   Titration 219:    70 seconds, biggest stdev of conformer occ = 0.075
+   Titration 220:    81 seconds, biggest stdev of conformer occ = 0.070
+   Titration 221:    72 seconds, biggest stdev of conformer occ = 0.075
+   Titration 222:    71 seconds, biggest stdev of conformer occ = 0.076
+   Titration 223:    72 seconds, biggest stdev of conformer occ = 0.076
+   Titration 224:    71 seconds, biggest stdev of conformer occ = 0.101
+   Titration 225:    82 seconds, biggest stdev of conformer occ = 0.088
+   Titration 226:    78 seconds, biggest stdev of conformer occ = 0.064
+   Titration 227:    71 seconds, biggest stdev of conformer occ = 0.059
+   Titration 228:    73 seconds, biggest stdev of conformer occ = 0.053
+   Titration 229:    69 seconds, biggest stdev of conformer occ = 0.052
+   Titration 230:    79 seconds, biggest stdev of conformer occ = 0.066
+   Titration 231:    80 seconds, biggest stdev of conformer occ = 0.078
+   Titration 232:    96 seconds, biggest stdev of conformer occ = 0.061
+   Titration 233:    70 seconds, biggest stdev of conformer occ = 0.060
+   Titration 234:    70 seconds, biggest stdev of conformer occ = 0.062
+   Titration 235:    86 seconds, biggest stdev of conformer occ = 0.073
+   Titration 236:    73 seconds, biggest stdev of conformer occ = 0.079
+   Titration 237:    80 seconds, biggest stdev of conformer occ = 0.075
+   Titration 238:    84 seconds, biggest stdev of conformer occ = 0.074
+   Titration 239:    86 seconds, biggest stdev of conformer occ = 0.055
+   Titration 240:    89 seconds, biggest stdev of conformer occ = 0.059
+   Done
+   Fit titration curves to get pKa/Em ...
+   MFE: didn't specify mfe point, do mfe at pKa or Em 
+   Done
+   Total time on MC: 18857 seconds
+   Output files:
+      mc_out          : MC progress and convergence.
+      fort.38         : Occupancy table.
+      entropy.out     : Entropy correction table
+      pK.out          : pKa or Em from titration curve fitting.
+      sum_crg.out     : Summary of residue charges.
+Step 4 Done.
+
